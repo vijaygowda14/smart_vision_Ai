@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Navigation Assistant</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            background: #f2f2f2;
+            padding: 40px;
+        }
+
+        .box {
+            background: white;
+            width: 500px;
+            margin: auto;
+            padding: 30px;
+            border-radius: 10px;
+        }
+
+        input {
+            padding: 10px;
+            width: 250px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: blue;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h1>Navigation Assistant</h1>
+
+    <input
+        type="text"
+        id="direction"
+        placeholder="Enter direction"
+    >
+
+    <button onclick="navigateDirection()">
+        Navigate
+    </button>
+
+    <h3 id="navResult"></h3>
+</div>
+
+<script>
+async function navigateDirection() {
+
+    const direction =
+        document.getElementById('direction').value;
+
+    const response = await fetch(
+        `/api/navigation/?direction=${direction}`
+    );
+
+    const data = await response.json();
+
+    document.getElementById('navResult').innerText =
+        data.voice_instruction;
+
+    speechSynthesis.speak(
+        new SpeechSynthesisUtterance(
+            data.voice_instruction
+        )
+    );
+}
+</script>
+
+</body>
+</html>

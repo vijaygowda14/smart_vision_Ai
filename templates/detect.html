@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Object Detection</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            padding: 40px;
+            background: #f2f2f2;
+        }
+
+        .box {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 500px;
+            margin: auto;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin-top: 20px;
+            background: green;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+
+        img {
+            width: 300px;
+            margin-top: 20px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h1>Object Detection</h1>
+
+    <input type="file" id="imageInput">
+
+    <br>
+
+    <img id="preview">
+
+    <br>
+
+    <button onclick="detectObjects()">Detect Objects</button>
+
+    <h3 id="result"></h3>
+</div>
+
+<script>
+const imageInput = document.getElementById('imageInput');
+const preview = document.getElementById('preview');
+
+imageInput.addEventListener('change', () => {
+    const file = imageInput.files[0];
+    preview.src = URL.createObjectURL(file);
+});
+
+async function detectObjects() {
+
+    const formData = new FormData();
+    formData.append('image', imageInput.files[0]);
+
+    const response = await fetch('/api/detect/', {
+        method: 'POST',
+        body: formData
+    });
+
+    const data = await response.json();
+
+    const detectedText =
+        'Detected: ' + data.detected_objects.join(', ');
+
+    document.getElementById('result').innerText = detectedText;
+
+    speechSynthesis.speak(
+        new SpeechSynthesisUtterance(detectedText)
+    );
+}
+</script>
+
+</body>
+</html>
