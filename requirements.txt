@@ -1,0 +1,9 @@
+
+django
+djangorestframework
+pillow
+ultralytics
+opencv-python
+pytesseract
+pyttsx3
+numpy

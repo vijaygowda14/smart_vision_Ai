@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Vision Assistant</title>
+
+    <style>
+
+        body{
+            margin:0;
+            background:black;
+            overflow:hidden;
+        }
+
+        video{
+            width:100vw;
+            height:100vh;
+            object-fit:cover;
+        }
+
+        canvas{
+            display:none;
+        }
+
+        .status{
+            position:absolute;
+            top:20px;
+            left:20px;
+            color:white;
+            background:rgba(0,0,0,.6);
+            padding:10px;
+            border-radius:10px;
+            z-index:999;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="status">
+
+Smart Vision Assistant Running
+
+</div>
+
+<video id="video" autoplay playsinline></video>
+
+<canvas id="canvas"></canvas>
+
+<script>
+
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let lastMessage = "";
+
+// CAMERA
+
+navigator.mediaDevices.getUserMedia({
+    video:true
+})
+.then(stream=>{
+
+    video.srcObject = stream;
+
+    speak("Smart vision assistant started");
+
+    startVoiceRecognition();
+
+});
+
+// SPEAK
+
+function speak(text){
+
+    if(text===lastMessage) return;
+
+    lastMessage=text;
+
+    speechSynthesis.cancel();
+
+    const speech =
+        new SpeechSynthesisUtterance(text);
+
+    speech.rate=1;
+
+    speechSynthesis.speak(speech);
+}
+
+// VOICE COMMANDS
+
+function startVoiceRecognition(){
+
+    const recognition =
+        new webkitSpeechRecognition();
+
+    recognition.continuous=true;
+
+    recognition.lang='en-US';
+
+    recognition.onresult=function(event){
+
+        const command=
+            event.results[
+                event.results.length-1
+            ][0].transcript;
+
+        processCommand(command);
+
+    };
+
+    recognition.start();
+
+}
+
+// COMMAND PROCESSOR
+
+function processCommand(command){
+
+    command=command.toLowerCase();
+
+    console.log(command);
+
+    if(command.includes("take me to")){
+
+        speak(
+            "Navigation started"
+        );
+
+    }
+
+    else if(command.includes("help")){
+
+        speak(
+            "Emergency mode activated"
+        );
+
+    }
+
+    else if(command.includes("what is ahead")){
+
+        speak(
+            "Scanning environment"
+        );
+
+    }
+
+}
+
+// CAPTURE FRAME
+
+setInterval(()=>{
+
+    captureFrame();
+
+},3000);
+
+function captureFrame(){
+
+    canvas.width=video.videoWidth;
+
+    canvas.height=video.videoHeight;
+
+    ctx.drawImage(
+        video,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    canvas.toBlob(sendFrame);
+
+}
+
+// SEND FRAME TO DJANGO
+
+async function sendFrame(blob){
+
+    const formData=
+        new FormData();
+
+    formData.append(
+        "image",
+        blob,
+        "frame.jpg"
+    );
+
+    const response=
+        await fetch(
+            "/api/detect/",
+            {
+                method:"POST",
+                body:formData
+            }
+        );
+
+    const data=
+        await response.json();
+
+    analyzeObjects(
+        data.detected_objects
+    );
+}
+
+// OBJECT ANALYSIS
+
+function analyzeObjects(objects){
+
+    if(objects.length === 0){
+
+        speak(
+            "Path clear. Continue forward."
+        );
+
+        return;
+    }
+
+    const object = objects[0];
+
+    const label = object.label;
+
+    const position = object.position;
+
+    const distance = object.distance;
+
+    if(distance === "danger"){
+
+        speak(
+            `${label} extremely close. Stop immediately.`
+        );
+
+        return;
+    }
+
+    if(position === "left"){
+
+        speak(
+            `${label} on left. Move slightly right.`
+        );
+
+    }
+    else if(position === "right"){
+
+        speak(
+            `${label} on right. Move slightly left.`
+        );
+
+    }
+    else{
+
+        speak(
+            `${label} ahead. Proceed carefully.`
+        );
+
+    }
+}
+
+</script>
+
+</body>
+</html>
