@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OCR Reader</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            background: #f2f2f2;
+            padding: 40px;
+        }
+
+        .box {
+            background: white;
+            width: 500px;
+            margin: auto;
+            padding: 30px;
+            border-radius: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: orange;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+
+        img {
+            width: 300px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h1>OCR Text Reader</h1>
+
+    <input type="file" id="ocrImage">
+
+    <br><br>
+
+    <img id="ocrPreview">
+
+    <br><br>
+
+    <button onclick="readText()">Read Text</button>
+
+    <h3 id="ocrResult"></h3>
+</div>
+
+<script>
+const ocrImage = document.getElementById('ocrImage');
+const ocrPreview = document.getElementById('ocrPreview');
+
+ocrImage.addEventListener('change', () => {
+    const file = ocrImage.files[0];
+    ocrPreview.src = URL.createObjectURL(file);
+});
+
+async function readText() {
+
+    const formData = new FormData();
+    formData.append('image', ocrImage.files[0]);
+
+    const response = await fetch('/api/read-text/', {
+        method: 'POST',
+        body: formData
+    });
+
+    const data = await response.json();
+
+    document.getElementById('ocrResult').innerText = data.text;
+
+    speechSynthesis.speak(
+        new SpeechSynthesisUtterance(data.text)
+    );
+}
+</script>
+
+</body>
+</html>
